@@ -7,8 +7,7 @@ const words = ["LIGHT", "COLOR", "SOUND", "FEELING", "MEMORY", "FORM"];
 export default function ExperienceHero() {
   const sectionRef = useRef<HTMLElement | null>(null);
   const [progress, setProgress] = useState(0);
-  const [soundOn, setSoundOn] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [videoLoaded, setVideoLoaded] = useState(false);
 
   useEffect(() => {
     const onPointerMove = (event: PointerEvent) => {
@@ -16,10 +15,11 @@ export default function ExperienceHero() {
       if (!el) return;
       const rect = el.getBoundingClientRect();
       const x = Math.min(100, Math.max(0, ((event.clientX - rect.left) / rect.width) * 100));
-      const y = Math.min(100, Math.max(0, ((event.clientY - Math.max(rect.top, 0)) / window.innerHeight) * 100));
+      const y = Math.min(100, Math.max(0, (event.clientY / window.innerHeight) * 100));
       el.style.setProperty("--mx", x + "%");
       el.style.setProperty("--my", y + "%");
     };
+
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     return () => window.removeEventListener("pointermove", onPointerMove);
   }, []);
@@ -32,16 +32,15 @@ export default function ExperienceHero() {
       if (!el) return;
       const rect = el.getBoundingClientRect();
       const scrollable = Math.max(el.offsetHeight - window.innerHeight, 1);
-      const p = Math.min(1, Math.max(0, -rect.top / scrollable));
-      setProgress(p);
+      const nextProgress = Math.min(1, Math.max(0, -rect.top / scrollable));
+      setProgress(nextProgress);
       ticking = false;
     };
 
     const onScroll = () => {
-      if (!ticking) {
-        ticking = true;
-        requestAnimationFrame(update);
-      }
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
     };
 
     update();
@@ -53,58 +52,50 @@ export default function ExperienceHero() {
     };
   }, []);
 
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.volume = soundOn ? Math.min(0.42, 0.12 + progress * 0.3) : 0;
-    if (soundOn) {
-      audio.play().catch(() => setSoundOn(false));
-    } else {
-      audio.pause();
-    }
-  }, [soundOn, progress]);
-
-  const activeWord = Math.min(words.length - 1, Math.floor(Math.max(0, progress - 0.12) / 0.09));
-  const showWords = progress > 0.10 && progress < 0.68;
-  const showManifesto = progress >= 0.60 && progress < 0.84;
-  const showNav = progress >= 0.78;
+  const wordProgress = Math.max(0, progress - 0.04);
+  const activeWord = Math.min(words.length - 1, Math.floor(wordProgress / 0.075));
+  const showWords = progress >= 0.04 && progress < 0.53;
+  const showManifesto = progress >= 0.46 && progress < 0.79;
+  const showNav = progress >= 0.70;
 
   return (
     <section className="experience" ref={sectionRef}>
       <div className="experience-sticky">
+        <div className="ambient-backdrop" aria-hidden="true" />
+
         <div
-          className="video-shell"
+          className={videoLoaded ? "video-shell loaded" : "video-shell"}
           style={{
-            opacity: Math.min(1, Math.max(0, (progress - 0.025) * 4.8)),
-            transform: `scale(${1.12 - progress * 0.08})`,
-            filter: `saturate(${0.75 + progress * 0.55}) brightness(${0.45 + progress * 0.55}) blur(${Math.max(0, 7 - progress * 14)}px)`,
+            opacity: 0.18 + progress * 0.82,
+            transform: `scale(${1.08 - progress * 0.05})`,
+            filter: `saturate(${0.8 + progress * 0.45}) brightness(${0.62 + progress * 0.30}) blur(${Math.max(0, 4 - progress * 8)}px)`,
           }}
         >
           <iframe
             title="Lost Dragon visual field"
-            src="https://player.vimeo.com/video/1029407814?h=48c2a47f28&background=1&autoplay=1&muted=1&loop=1&byline=0&title=0"
-            allow="autoplay; fullscreen; picture-in-picture"
+            src="https://player.vimeo.com/video/1029407814?h=48c2a47f28&background=1&autoplay=1&muted=1&loop=1&controls=0&playsinline=1&title=0&byline=0&portrait=0&dnt=1"
+            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
             referrerPolicy="strict-origin-when-cross-origin"
+            onLoad={() => setVideoLoaded(true)}
           />
         </div>
 
-        <div className="black-veil" style={{ opacity: Math.max(0, 1 - progress * 3.2) }} />
+        <div
+          className="black-veil"
+          style={{ opacity: Math.max(0, 0.84 - progress * 3.7) }}
+          aria-hidden="true"
+        />
         <div className="cursor-field" aria-hidden="true" />
 
         <header className="brand-line">
           <span>LOST DRAGON</span>
-          <button
-            className="sound-toggle"
-            type="button"
-            aria-pressed={soundOn}
-            onClick={() => setSoundOn((v) => !v)}
-          >
-            {soundOn ? "SOUND ON" : "SOUND OFF"}
-          </button>
+          <span className="media-status">{videoLoaded ? "VISUAL ONLINE" : "VISUAL FALLBACK"}</span>
         </header>
 
-        <div className="intro-copy" style={{ opacity: Math.max(0, 1 - progress * 7) }}>
-          <p>SCROLL TO ENTER</p>
+        <div className="intro-lockup" style={{ opacity: Math.max(0, 1 - progress * 8) }}>
+          <p className="intro-eyebrow">WELCOME TO</p>
+          <h1>LOST DRAGON</h1>
+          <p className="intro-scroll">SCROLL TO ENTER</p>
         </div>
 
         {showWords && (
@@ -116,9 +107,9 @@ export default function ExperienceHero() {
                   key={word}
                   className={distance === 0 ? "crystal-word active" : "crystal-word"}
                   style={{
-                    opacity: distance === 0 ? 1 : Math.max(0, 0.18 - distance * 0.06),
-                    filter: `blur(${distance === 0 ? 0 : 12 + distance * 5}px)`,
-                    transform: `translateY(${(index - activeWord) * 24}px) scale(${distance === 0 ? 1 : 0.96})`,
+                    opacity: distance === 0 ? 1 : Math.max(0, 0.13 - distance * 0.04),
+                    filter: `blur(${distance === 0 ? 0 : 10 + distance * 4}px)`,
+                    transform: `translateY(${(index - activeWord) * 26}px) scale(${distance === 0 ? 1 : 0.96})`,
                   }}
                 >
                   {word}
@@ -131,11 +122,11 @@ export default function ExperienceHero() {
         {showManifesto && (
           <div className="manifesto-layer">
             <p className="manifesto-kicker">THE POWER OF ART</p>
-            <h1>
+            <h2>
               In a world slowly fading into shades of grey,
               <br />
               light, color, sound and feeling become more than decoration.
-            </h1>
+            </h2>
             <p className="manifesto-tail">
               They become memory. They become language. They become art.
             </p>
@@ -158,10 +149,6 @@ export default function ExperienceHero() {
             </nav>
           </div>
         )}
-
-        <audio ref={audioRef} loop preload="none">
-          <source src="/audio/event-horizon-pulse.mp3" type="audio/mpeg" />
-        </audio>
       </div>
     </section>
   );

@@ -11,6 +11,20 @@ export default function ExperienceHero() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    const onPointerMove = (event: PointerEvent) => {
+      const el = sectionRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const x = Math.min(100, Math.max(0, ((event.clientX - rect.left) / rect.width) * 100));
+      const y = Math.min(100, Math.max(0, ((event.clientY - Math.max(rect.top, 0)) / window.innerHeight) * 100));
+      el.style.setProperty("--mx", x + "%");
+      el.style.setProperty("--my", y + "%");
+    };
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onPointerMove);
+  }, []);
+
+  useEffect(() => {
     let ticking = false;
 
     const update = () => {

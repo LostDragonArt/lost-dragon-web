@@ -9,6 +9,8 @@ export default function ExperienceHero() {
   const [progress, setProgress] = useState(0);
   const [videoLoaded, setVideoLoaded] = useState(false);
 
+  const videoActive = progress > 0.012;
+
   useEffect(() => {
     const onPointerMove = (event: PointerEvent) => {
       const el = sectionRef.current;
@@ -52,11 +54,11 @@ export default function ExperienceHero() {
     };
   }, []);
 
-  const wordProgress = Math.max(0, progress - 0.04);
-  const activeWord = Math.min(words.length - 1, Math.floor(wordProgress / 0.075));
-  const showWords = progress >= 0.04 && progress < 0.53;
-  const showManifesto = progress >= 0.46 && progress < 0.79;
-  const showNav = progress >= 0.70;
+  const wordProgress = Math.max(0, progress - 0.13);
+  const activeWord = Math.min(words.length - 1, Math.floor(wordProgress / 0.067));
+  const showWords = progress >= 0.13 && progress < 0.55;
+  const showManifesto = progress >= 0.50 && progress < 0.80;
+  const showNav = progress >= 0.72;
 
   return (
     <section className="experience" ref={sectionRef}>
@@ -66,37 +68,32 @@ export default function ExperienceHero() {
         <div
           className={videoLoaded ? "video-shell loaded" : "video-shell"}
           style={{
-            opacity: 0.18 + progress * 0.82,
-            transform: `scale(${1.08 - progress * 0.05})`,
-            filter: `saturate(${0.8 + progress * 0.45}) brightness(${0.62 + progress * 0.30}) blur(${Math.max(0, 4 - progress * 8)}px)`,
+            opacity: videoActive ? Math.min(1, Math.max(0, (progress - 0.012) * 6.5)) : 0,
+            transform: `scale(${1.10 - progress * 0.07})`,
+            filter: `saturate(${0.72 + progress * 0.55}) brightness(${0.48 + progress * 0.42}) blur(${Math.max(0, 6 - progress * 13)}px)`,
           }}
         >
-          <iframe
-            title="Lost Dragon visual field"
-            src="https://player.vimeo.com/video/1029407814?h=48c2a47f28&background=1&autoplay=1&muted=1&loop=1&controls=0&playsinline=1&title=0&byline=0&portrait=0&dnt=1"
-            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-            referrerPolicy="strict-origin-when-cross-origin"
-            onLoad={() => setVideoLoaded(true)}
-          />
+          {videoActive && (
+            <iframe
+              title="Lost Dragon visual field"
+              src="https://player.vimeo.com/video/1029407814?h=48c2a47f28&background=1&autoplay=1&muted=1&loop=1&controls=0&playsinline=1&title=0&byline=0&portrait=0&dnt=1"
+              allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+              referrerPolicy="strict-origin-when-cross-origin"
+              onLoad={() => setVideoLoaded(true)}
+            />
+          )}
         </div>
 
         <div
           className="black-veil"
-          style={{ opacity: Math.max(0, 0.84 - progress * 3.7) }}
+          style={{ opacity: Math.max(0, 1 - progress * 6.5) }}
           aria-hidden="true"
         />
-        <div className="cursor-field" aria-hidden="true" />
-
-        <header className="brand-line">
-          <span>LOST DRAGON</span>
-          <span className="media-status">{videoLoaded ? "VISUAL ONLINE" : "VISUAL FALLBACK"}</span>
-        </header>
-
-        <div className="intro-lockup" style={{ opacity: Math.max(0, 1 - progress * 8) }}>
-          <p className="intro-eyebrow">WELCOME TO</p>
-          <h1>LOST DRAGON</h1>
-          <p className="intro-scroll">SCROLL TO ENTER</p>
-        </div>
+        <div
+          className="cursor-field"
+          style={{ opacity: progress < 0.08 ? 0 : Math.min(0.58, (progress - 0.08) * 3.5) }}
+          aria-hidden="true"
+        />
 
         {showWords && (
           <div className="word-field" aria-live="polite">
